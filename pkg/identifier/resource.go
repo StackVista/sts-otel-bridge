@@ -14,7 +14,7 @@ var Mapping = map[string][]string{
 
 func Identify(resource *v1.Resource) (Identifier, error) {
 	kvs := toMap(resource)
-	for pattern, keys := range Mapping {
+	for _, keys := range Mapping {
 		for _, key := range keys {
 			if _, ok := kvs[key]; !ok {
 				// not this pattern
@@ -23,7 +23,7 @@ func Identify(resource *v1.Resource) (Identifier, error) {
 		}
 
 		// all keys matched
-		return CreateIdentifier(pattern, kvs)
+		return "TODO", nil
 	}
 
 	return "", fmt.Errorf("No identifier matched resource")

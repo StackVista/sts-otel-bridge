@@ -10,6 +10,7 @@ import (
 )
 
 type Batcher[OTelData otel.OpenTelemetryData] struct {
+	Name         string
 	BatchSize    int
 	BatchTimeout time.Duration
 	In           <-chan []OTelData
@@ -17,8 +18,9 @@ type Batcher[OTelData otel.OpenTelemetryData] struct {
 	WaitGroup    *sync.WaitGroup
 }
 
-func NewBatcher[D otel.OpenTelemetryData](config Config, in <-chan []D) *Batcher[D] {
+func NewBatcher[D otel.OpenTelemetryData](config Config, in <-chan []D, name string) *Batcher[D] {
 	return &Batcher[D]{
+		Name:         name,
 		BatchSize:    config.BatchSize,
 		BatchTimeout: config.BatchTimeout,
 		In:           in,
@@ -36,7 +38,7 @@ func (b *Batcher[_]) Start(ctx context.Context) error {
 }
 
 func (b *Batcher[DataList]) Run(ctx context.Context) {
-	logger := logging.LoggerFor(ctx, "batcher")
+	logger := logging.LoggerFor(ctx, b.Name)
 	batch := []DataList{}
 	ticker := time.NewTicker(b.BatchTimeout)
 

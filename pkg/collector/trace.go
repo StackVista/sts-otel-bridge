@@ -3,9 +3,11 @@ package collector
 import (
 	"context"
 	"encoding/binary"
+	"encoding/json"
 
 	"github.com/stackvista/sts-otel-bridge/internal/config"
 	"github.com/stackvista/sts-otel-bridge/internal/logging"
+	"github.com/stackvista/sts-otel-bridge/pkg/identifier"
 	ststracepb "github.com/stackvista/sts-otel-bridge/proto/sts/trace"
 	coltracepb "go.opentelemetry.io/proto/otlp/collector/trace/v1"
 	v1 "go.opentelemetry.io/proto/otlp/common/v1"
@@ -31,10 +33,21 @@ func NewTraceCollector(cfg config.Trace) *TraceCollector {
 }
 
 func (t *TraceCollector) Export(ctx context.Context, req *coltracepb.ExportTraceServiceRequest) (*coltracepb.ExportTraceServiceResponse, error) {
-	logger := logging.LoggerFor(ctx, "TraceCollector")
+	logger := logging.LoggerFor(ctx, "trace-collector")
 	var traces map[TraceID]*ststracepb.APITrace = map[TraceID]*ststracepb.APITrace{}
+
 	for _, rs := range req.GetResourceSpans() {
 		logger.Debug().Str("resource-attributes", rs.GetResource().String()).Msg("Processing ResourceSpan")
+		ident, err := identifier.Identify(rs.GetResource())
+		if err != nil {
+			js, err := json.Marshal(rs.GetResource())
+			if err != nil {
+				logger.Warn().Err(err).Msg("Failed to marshal resource")
+			}
+			logger.Warn().Err(err).Str("resource", string(js)).Msg("Failed to identify resource")
+		}
+		logger.Info().Str("resource", string(ident)).Msg("Identified resource")
+
 		for _, ss := range rs.GetScopeSpans() {
 			for _, s := range ss.GetSpans() {
 				// Group the Spans by their TraceIDs for StS

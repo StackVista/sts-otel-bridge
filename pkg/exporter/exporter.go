@@ -72,8 +72,8 @@ func (e *Exporter) Run(ctx context.Context) error {
 
 func startTrace(ctx context.Context, cfg config.Trace, server *grpc.Server) func(os.Signal) {
 	tracer := collector.NewTraceCollector(cfg)
-	traceBatcher := batcher.NewBatcher(cfg.Batcher, tracer.Out)
-	sender := stdout.NewStdOutSender(traceBatcher.Out)
+	traceBatcher := batcher.NewBatcher(cfg.Batcher, tracer.Out, "trace-batcher")
+	sender := stdout.NewStdOutSender(traceBatcher.Out, "trace-sender")
 	tracer.Register(server)
 
 	shutdownHook := func(s os.Signal) {

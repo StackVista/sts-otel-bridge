@@ -9,12 +9,14 @@ import (
 )
 
 type StdOutSender[OTelData otel.OpenTelemetryData] struct {
+	Name      string
 	In        <-chan []OTelData
 	WaitGroup *sync.WaitGroup
 }
 
-func NewStdOutSender[OTelData otel.OpenTelemetryData](in <-chan []OTelData) *StdOutSender[OTelData] {
+func NewStdOutSender[OTelData otel.OpenTelemetryData](in <-chan []OTelData, name string) *StdOutSender[OTelData] {
 	return &StdOutSender[OTelData]{
+		Name:      name,
 		In:        in,
 		WaitGroup: &sync.WaitGroup{},
 	}
@@ -28,7 +30,7 @@ func (s *StdOutSender[_]) Start(ctx context.Context) error {
 }
 
 func (s *StdOutSender[DataList]) run(ctx context.Context) {
-	logger := logging.LoggerFor(ctx, "stdout-sender")
+	logger := logging.LoggerFor(ctx, s.Name)
 	defer s.WaitGroup.Done()
 
 	for {
