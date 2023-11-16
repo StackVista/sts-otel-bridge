@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 
+	"github.com/rs/zerolog"
 	"github.com/stackvista/sts-otel-bridge/internal/config"
 	"github.com/stackvista/sts-otel-bridge/internal/logging"
 	"github.com/stackvista/sts-otel-bridge/pkg/identifier"
@@ -21,29 +22,30 @@ type TraceID uint64
 
 type TraceCollector struct {
 	coltracepb.UnimplementedTraceServiceServer
+	Logger zerolog.Logger
 	Out    chan []*ststracepb.APITrace
 	Active bool
 }
 
-func NewTraceCollector(cfg config.Trace) *TraceCollector {
+func NewTraceCollector(ctx context.Context, cfg config.Trace) *TraceCollector {
 	return &TraceCollector{
+		Logger: logging.LoggerFor(ctx, "trace-collector"),
 		Out:    make(chan []*ststracepb.APITrace),
 		Active: true,
 	}
 }
 
 func (t *TraceCollector) Export(ctx context.Context, req *coltracepb.ExportTraceServiceRequest) (*coltracepb.ExportTraceServiceResponse, error) {
-	logger := logging.LoggerFor(ctx, "trace-collector")
+	logger := t.Logger
 	var traces map[TraceID]*ststracepb.APITrace = map[TraceID]*ststracepb.APITrace{}
 
-	for _, rs := range req.GetResourceSpans() {
-		// TODO - remove this once we have a better way to debug
-		js, err := json.Marshal(rs.GetResource())
-		if err != nil {
-			logger.Warn().Err(err).Msg("Failed to marshal resource")
-		}
-		println(string(js))
+	js, err := json.Marshal(req)
+	if err != nil {
+		logger.Warn().Err(err).Msg("Failed to marshal request")
+	}
+	logger.Debug().Str("request", string(js)).Msg("Received request")
 
+	for _, rs := range req.GetResourceSpans() {
 		logger.Debug().Str("resource-attributes", rs.GetResource().String()).Msg("Processing ResourceSpan")
 		ident, err := identifier.Identify(rs.GetResource())
 		if err != nil {
