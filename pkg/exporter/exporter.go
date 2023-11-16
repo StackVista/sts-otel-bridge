@@ -16,6 +16,7 @@ import (
 	"github.com/stackvista/sts-otel-bridge/pkg/collector"
 	"github.com/stackvista/sts-otel-bridge/pkg/sender/stdout"
 	"google.golang.org/grpc"
+	_ "google.golang.org/grpc/encoding/gzip"
 )
 
 type Exporter struct {
