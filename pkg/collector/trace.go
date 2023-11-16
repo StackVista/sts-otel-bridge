@@ -37,6 +37,13 @@ func (t *TraceCollector) Export(ctx context.Context, req *coltracepb.ExportTrace
 	var traces map[TraceID]*ststracepb.APITrace = map[TraceID]*ststracepb.APITrace{}
 
 	for _, rs := range req.GetResourceSpans() {
+		// TODO - remove this once we have a better way to debug
+		js, err := json.Marshal(rs.GetResource())
+		if err != nil {
+			logger.Warn().Err(err).Msg("Failed to marshal resource")
+		}
+		println(string(js))
+
 		logger.Debug().Str("resource-attributes", rs.GetResource().String()).Msg("Processing ResourceSpan")
 		ident, err := identifier.Identify(rs.GetResource())
 		if err != nil {
