@@ -24,15 +24,15 @@ spec:
       - name: '{{ template "fullname.short" . }}-pull-secret'
     {{- end }}
       containers:
-      - name: kommoner
+      - name: sts-otel-bridge
         image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         args:
         - start
         - -vv
         ports:
-        - containerPort: 8080
-          name: app
+        - containerPort: 4317
+          name: grpc
         resources:
 {{ toYaml .Values.resources | indent 10 }}
 {{- if .Values.securityContext }}

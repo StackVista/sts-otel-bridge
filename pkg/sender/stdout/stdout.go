@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/stackvista/sts-otel-bridge/internal/logging"
 	"github.com/stackvista/sts-otel-bridge/pkg/otel"
 )
 
@@ -27,12 +28,14 @@ func (s *StdOutSender[_]) Start(ctx context.Context) error {
 }
 
 func (s *StdOutSender[DataList]) run(ctx context.Context) {
+	logger := logging.LoggerFor(ctx, "stdout-sender")
 	defer s.WaitGroup.Done()
 
 	for {
 		select {
 		case ts, ok := <-s.In:
 			if !ok {
+				logger.Warn().Msg("Channel closed, exiting")
 				return
 			}
 

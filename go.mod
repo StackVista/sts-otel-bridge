@@ -8,7 +8,6 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
-	github.com/ztrue/shutdown v0.1.1
 	go.opentelemetry.io/proto/otlp v1.0.0
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0

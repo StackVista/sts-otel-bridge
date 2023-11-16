@@ -1,5 +1,5 @@
 package grpc
 
 type Config struct {
-	Port int `yaml:"port" default:"8080"`
+	Port int `yaml:"port" default:"4317"`
 }

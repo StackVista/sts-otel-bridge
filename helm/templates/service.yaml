@@ -6,10 +6,10 @@ metadata:
   labels:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
 spec:
-  type: {{ .Values.service.type }}
+  type: ClusterIP
   ports:
-  - port: 80
-    targetPort: app
+  - port: 4317
+    targetPort: grpc
     protocol: TCP
   selector:
     app: {{ include "fullname.short" . }}

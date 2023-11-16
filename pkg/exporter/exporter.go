@@ -2,7 +2,12 @@ package exporter
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"net"
 	"os"
+	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/stackvista/sts-otel-bridge/internal/config"
@@ -10,7 +15,6 @@ import (
 	"github.com/stackvista/sts-otel-bridge/pkg/batcher"
 	"github.com/stackvista/sts-otel-bridge/pkg/collector"
 	"github.com/stackvista/sts-otel-bridge/pkg/sender/stdout"
-	"github.com/ztrue/shutdown"
 	"google.golang.org/grpc"
 )
 
@@ -25,7 +29,13 @@ func NewExporter(cfg *config.Config) *Exporter {
 }
 
 func (e *Exporter) Run(ctx context.Context) error {
+	logger := logging.LoggerFor(ctx, "main")
 	server := grpc.NewServer()
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", e.cfg.Grpc.Port))
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to listen")
+	}
 
 	hooks := []func(os.Signal){}
 	if e.cfg.Trace.Enabled {
@@ -33,8 +43,14 @@ func (e *Exporter) Run(ctx context.Context) error {
 		hooks = append(hooks, hook)
 	}
 
-	shutdown.AddWithParam(func(s os.Signal) {
-		logger := logging.LoggerFor(ctx, "main-shutdown-hook")
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		s := <-sigCh
+		logger := logging.LoggerFor(ctx, "main-hook")
 		logger.Warn().Str("signal", s.String()).Msg("Received signal, shutting down GRPC server")
 		server.Stop()
 
@@ -42,10 +58,14 @@ func (e *Exporter) Run(ctx context.Context) error {
 		for _, hook := range hooks {
 			hook(s)
 		}
-	})
+		logger.Info().Msg("Shutdown complete")
+	}()
 
-	shutdown.Listen(syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-
+	err = server.Serve(lis)
+	if err != nil {
+		log.Fatalf("could not serve: %v", err)
+	}
+	wg.Wait()
 	return nil
 }
 
