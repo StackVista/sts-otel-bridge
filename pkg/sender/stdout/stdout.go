@@ -33,14 +33,16 @@ func (s *StdOutSender[DataList]) run(ctx context.Context) {
 
 	for {
 		select {
-		case ts, ok := <-s.In:
+		case d, ok := <-s.In:
 			if !ok {
 				logger.Warn().Msg("Channel closed, exiting")
 				return
 			}
 
-			for _, t := range ts {
-				otel.PrintOTelData(t)
+			logger.Debug().Int("data-length", len(d)).Msg("Received data")
+
+			for _, item := range d {
+				otel.PrintOTelData(item)
 			}
 		}
 	}

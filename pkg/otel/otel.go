@@ -14,6 +14,6 @@ func PrintOTelData[D OpenTelemetryData](data D) {
 	switch dd := any(data).(type) {
 	case *ststracepb.APITrace:
 		js, _ := json.Marshal(dd)
-		println(js)
+		println(string(js))
 	}
 }
