@@ -1,0 +1,14 @@
+apiVersion: v2
+appVersion: "0.0.1"
+version: 0.1.0
+description: Helm chart for StackState OpenTelemetry Bridge
+keywords:
+  - kubernetes
+  - observability
+  - stackstate
+  - opentelemetry
+  - otel
+maintainers:
+  - name: Stackstate Ops Team
+    email: ops@stackstate.com
+name: sts-otel-bridge
